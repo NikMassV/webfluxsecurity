@@ -33,6 +33,7 @@ dependencies {
 	implementation "javax.xml.bind:jaxb-api:$jaxbApiVersion" //warnings
     implementation 'org.projectlombok:lombok:1.18.22'
 
+	compileOnly("org.projectlombok:lombok")
 	annotationProcessor "org.projectlombok:lombok"
 	annotationProcessor "org.mapstruct:mapstruct-processor:$mapStructVersion"
 
