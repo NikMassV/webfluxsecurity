@@ -2,7 +2,7 @@ package edu.nm.webfluxsecurity.security;
 
 import edu.nm.webfluxsecurity.entity.UserEntity;
 import edu.nm.webfluxsecurity.exception.AuthException;
-import edu.nm.webfluxsecurity.repository.UserRepository;
+import edu.nm.webfluxsecurity.service.UserService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class SecurityService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret}")
@@ -28,7 +28,7 @@ public class SecurityService {
     private String issuer;
 
     public Mono<TokenDetails> authenticate(String username, String password) {
-        return userRepository.findByUsername(username)
+        return userService.getUserByUsername(username)
                 .flatMap(user -> {
                     if (!user.isEnabled()) {
                         return Mono.error(new AuthException("Account disabled", "USER_ACCOUNT_DISABLED"));
@@ -53,7 +53,7 @@ public class SecurityService {
 
     private TokenDetails generateToken(Map<String, Object> claims, String subject) {
         var expirationTimeMillis = expirationInSeconds * 1000L;
-        Date expirationDate = new Date(new Date().getTime() * expirationTimeMillis);
+        Date expirationDate = new Date(new Date().getTime() + expirationTimeMillis);
         return generateToken(expirationDate, claims, subject);
     }
 
@@ -66,7 +66,7 @@ public class SecurityService {
                 .setIssuedAt(createdDate)
                 .setId(UUID.randomUUID().toString())
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.ES256, Base64.getEncoder().encodeToString(secret.getBytes()))
+                .signWith(SignatureAlgorithm.HS256, Base64.getEncoder().encodeToString(secret.getBytes()))
                 .compact();
         return TokenDetails.builder()
                 .token(token)
